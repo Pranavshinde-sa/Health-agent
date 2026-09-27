@@ -1,0 +1,41 @@
+services:
+  demo-service-1:
+    build: ./demo-service-1
+    container_name: demo-service-1
+    ports:
+      - "5001:5000"
+    restart: unless-stopped
+
+  demo-service-2:
+    build: ./demo-service-2
+    container_name: demo-service-2
+    ports:
+      - "5002:5000"
+    restart: unless-stopped
+
+  health-agent:
+    build: ./health-agent
+    container_name: health-agent
+    depends_on:
+      - demo-service-1
+      - demo-service-2
+
+    environment:
+      TARGETS: "demo-service-1=http://demo-service-1:5000/health,demo-service-2=http://demo-service-2:5000/health"
+
+      CHECK_INTERVAL_SECONDS: "15"
+      REQUEST_TIMEOUT_SECONDS: "5"
+
+      LOG_FILE: "/var/log/health_agent/health_agent.log"
+
+      # Gmail SMTP
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      ALERT_EMAIL_TO: "${ALERT_EMAIL_TO}"
+
+    volumes:
+      - ./health-agent-logs:/var/log/health_agent
+
+    restart: unless-stopped
